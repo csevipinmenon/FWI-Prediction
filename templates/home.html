@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FWI Prediction</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+      body {
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: #f9f9f9;
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+      }
+      h1 {
+        font-family: "Courier New", monospace;
+        font-size: 2.5rem;
+        color: #00ff41;
+        text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
+        margin-bottom: 1.5rem;
+        text-align: center;
+      }
+      .form-card {
+        background: rgba(0, 0, 0, 0.7);
+        padding: 2rem;
+        border-radius: 15px;
+        max-width: 700px;
+        width: 100%;
+        box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        animation: fadeIn 1s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.3rem;
+        font-size: 0.9rem;
+        color: #ffcc70;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 0.6rem;
+        border: none;
+        border-radius: 8px;
+        outline: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        font-size: 1rem;
+      }
+      input:focus {
+        border: 1px solid #00ff41;
+        box-shadow: 0 0 8px #00ff41;
+      }
+      .btn-submit {
+        grid-column: span 2;
+        margin-top: 1rem;
+        padding: 0.8rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 30px;
+        cursor: pointer;
+        background: linear-gradient(45deg, #ffb347, #ffcc70);
+        color: #222;
+        transition: all 0.3s ease;
+      }
+      .btn-submit:hover {
+        background: linear-gradient(45deg, #ffcc70, #ffb347);
+        transform: scale(1.05);
+      }
+      .result-card {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: rgba(0, 0, 0, 0.8);
+        border-radius: 12px;
+        text-align: center;
+        display: none;
+        box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+      }
+      .result-card h2 {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+        color: #00ff41;
+      }
+      .result-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ffcc70;
+        text-shadow: 0 0 8px #ffcc70;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔥 Algerian Forest Fires - FWI Prediction 🔥</h1>
+
+    <div class="form-card">
+      <form id="predictionForm" >
+        <div>
+          <label>Temperature (°C)</label>
+          <input type="number" name="Temperature" step="1" required />
+          <!-- integer -->
+        </div>
+        <div>
+          <label>Relative Humidity (%)</label>
+          <input type="number" name="RH" step="1" required />
+          <!-- integer -->
+        </div>
+        <div>
+          <label>Wind Speed (km/h)</label>
+          <input type="number" name="Ws" step="1" required />
+          <!-- integer -->
+        </div>
+        <div>
+          <label>Rain (mm)</label>
+          <input type="number" name="Rain" step="0.1" required />
+          <!-- float -->
+        </div>
+        <div>
+          <label>FFMC</label>
+          <input type="number" name="FFMC" step="0.1" required />
+          <!-- float -->
+        </div>
+        <div>
+          <label>DMC</label>
+          <input type="number" name="DMC" step="0.1" required />
+          <!-- float -->
+        </div>
+        
+        <div>
+          <label>ISI</label>
+          <input type="number" name="ISI" step="0.1" required />
+          <!-- float -->
+        </div>
+
+        <div>
+          <label>Classes (0,1)</label>
+          <select name="Classes">
+            <option value="0">No Fire</option>
+            <option value="1">Fire</option>
+          </select>
+        </div>
+        <div>
+          <label>Region (0,1)</label>
+          <select name="Region">
+            <option value="0">Bejaia</option>
+            <option value="1">Sidi-Bel Abbes</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-submit">Predict FWI</button>
+      </form>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <h2>Predicted Fire Weather Index</h2>
+      <div class="result-value" id="resultValue">--</div>
+    </div>
+
+    <script>
+      const form = document.getElementById("predictionForm");
+      const resultCard = document.getElementById("resultCard");
+      const resultValue = document.getElementById("resultValue");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+
+        // Send request to backend (/predictdata POST)
+        const res = await fetch("/predictdata", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+
+        resultCard.style.display = "block";
+        resultValue.textContent = result.fwi ? result.fwi : "Error";
+      });
+    </script>
+  </body>
+</html>
