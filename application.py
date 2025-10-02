@@ -13,13 +13,13 @@ app = application
 ridge_model = pickle.load(open("models/ridge.pkl","rb"))
 standard_scaler = pickle.load(open("models/scaler.pkl","rb"))
 
-new_data_scaled = standard_scaler.transform([[29,4,6,7,9,5,3,2,5]])
-ridge_model.predict(new_data_scaled)
-print(ridge_model)
+# new_data_scaled = standard_scaler.transform([[29,4,6,7,9,5,3,2,5]])
+# ridge_model.predict(new_data_scaled)
+# print(ridge_model)
 
 @app.route("/")
 def index():
-    print(ridge_model)
+   
     return  render_template('index.html')
 
 @app.route('/predictdata',methods=["GET","POST"])
